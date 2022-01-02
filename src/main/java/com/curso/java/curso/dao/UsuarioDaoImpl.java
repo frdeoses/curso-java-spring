@@ -1,6 +1,8 @@
 package com.curso.java.curso.dao;
 
 import com.curso.java.curso.models.Usuario;
+import de.mkammerer.argon2.Argon2;
+import de.mkammerer.argon2.Argon2Factory;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,14 +37,24 @@ public class UsuarioDaoImpl implements  UsuarioDao{
     }
 
     @Override
-    public boolean verificarEmailPassword(Usuario usuario) {
-        String query = "FROM Usuario WHERE email = :email AND password = :password";
+    public Usuario obtenerUsuarioPorCredenciales(Usuario usuario) {
+        String query = "FROM Usuario WHERE email = :email ";
         List<Usuario> listUsuarios = entityManager.createQuery(query)
                 .setParameter("email",usuario.getEmail())
-                .setParameter("password",usuario.getPassword())
                 .getResultList();
 
+        if(listUsuarios.isEmpty()){
+            return null;
+        }
 
-        return !listUsuarios.isEmpty();
+        String passwordHash = listUsuarios.get(0).getPassword();
+
+        Argon2 argon2 = Argon2Factory.create(Argon2Factory.Argon2Types.ARGON2id);
+
+        if(argon2.verify(passwordHash,usuario.getPassword())){
+            return listUsuarios.get(0);
+        }
+
+        return null;
     }
 }
