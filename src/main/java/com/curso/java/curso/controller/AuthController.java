@@ -2,6 +2,7 @@ package com.curso.java.curso.controller;
 
 import com.curso.java.curso.dao.UsuarioDao;
 import com.curso.java.curso.models.Usuario;
+import com.curso.java.curso.utils.JWTUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,11 +15,19 @@ public class AuthController {
     @Autowired
     private UsuarioDao usuarioDao;
 
+    @Autowired
+    private JWTUtil jwtUtil;
+
     @RequestMapping(value = "api/login", method = RequestMethod.POST)
     public String login(@RequestBody Usuario usuario){
 
-        if(usuarioDao.verificarEmailPassword(usuario)){
-            return "OK";
+        Usuario userLogin = usuarioDao.obtenerUsuarioPorCredenciales(usuario);
+
+        if(userLogin != null){
+
+            String tokenJWT =  jwtUtil.create(userLogin.getId().toString(),userLogin.getEmail());
+
+            return tokenJWT;
         }else{
             return "FAIL";
         }
